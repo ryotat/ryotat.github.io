@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="main.css" />
+    <script type="text/javascript" src="jquery-1.11.2.min.js"></script>
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+      showProcessingMessages: false,
+      tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] }
+      });
+    </script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="editor.js"></script>
+  </head>
+  <body>
+    <div id="main">
+      <div class="tips">
+	Copy and paste by ctrl+c and ctrl+v
+      </div>
+      <div class="paragraph" contenteditable="true">
+	Let $f: \mathbb{R}^d\rightarrow \mathbb{R}$ be a convex function, i.e.,\[f(\theta x + (1-\theta) y) \leq \theta f(x) + (1-\theta) f(y),\]for all $x,y\in\mathbb{R}^d$ and $\theta\in[0,1]$.
+      </div>
+      <div class="paragraph" contenteditable="true">
+	The convex conjugate $f^\ast:\mathbb{R}^d\rightarrow \mathbb{R}$ is defined as follows:
+	\[ f^\ast(\alpha)=\sup_{x\in\mathbb{R}^d}\left(\langle \alpha, x\rangle - f(x)\right). \]
+      </div>
+    </div>
+    <div id="clipboard" style="display: none">
+    </div>
+  </body>
+</html>

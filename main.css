@@ -1,0 +1,13 @@
+div#main {
+    margin: 50px 200px;
+    font-family: helvetica; font-size: 120%;
+    line-height: 150%;
+}
+div.tips {
+    color: #AAA;
+    margin-bottom: 50px;
+}
+div.paragraph:focus{
+    border:none;
+    outline:none;
+} 
