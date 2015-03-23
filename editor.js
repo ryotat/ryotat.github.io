@@ -91,6 +91,7 @@
 		Editor.copyToClipboard();
 	    }
 	    else if (e.which==86 && e.ctrlKey) {
+		e.preventDefault();
 		Editor.pasteAsText($this);
 	    }
 	});
