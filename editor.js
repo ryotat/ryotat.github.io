@@ -55,10 +55,10 @@
 		var n=node.childNodes[i];
 		if (n.tagName=="SCRIPT") {
 		    if (n.type=="math/tex; mode=display") {
-			range.insertNode(document.createTextNode("\\["+n.innerText+"\\]"));
+			range.insertNode(document.createTextNode("\\["+n.textContent+"\\]"));
 		    }
 		    else if (n.type=="math/tex") {
-			range.insertNode(document.createTextNode("$"+n.innerText+"$"));
+			range.insertNode(document.createTextNode("$"+n.textContent+"$"));
 		    }
 		}
 		else if (n.nodeType==3) {
