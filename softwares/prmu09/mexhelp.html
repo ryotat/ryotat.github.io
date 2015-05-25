@@ -1,0 +1,56 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="keywords" content="DAL, MKL, PRMU09, 冨岡亮太"/>
+  <title>MEXファイルのコンパイルに関して</title>
+  <link rel="stylesheet" href="basic.css" type="text/css"/>
+</head>
+<body style="line-height:150%">
+<h2>MEXファイルのコンパイルに関して</h2>
+<h3>目的</h3>
+<p>SpicyMKLを実行するには<code>HessAugMexbias.c</code>，<code>normKj.c</code>の2つのファイルをコンパイルする必要があります．</p>
+<p>MATLABが正しく設定されていれば，同じフォルダ内の<code>setup.m</code>を実行するだけです．このファイルには以下の2行が書かれています：
+<pre class="box">mex -lmwblas normKj.c
+mex -lmwblas HessAugMexbias.c</pre></p>
+<p>さらに詳しい情報はこちらをご覧下さい
+<ul>
+  <li><a href="http://www.mathworks.co.jp/mason/tag/proxy.html?dataid=11817&fileid=56811">MathWorks - MATLAB Compiler チュートリアル (pdf)</a></li>
+</ul>
+</p>
+<h3>BLAS ライブラリが見つからないと言われたら</h3>
+<p>Windows では例えば以下のように blas ライブラリへのパスを通す必要があるようです：
+<pre class="box">mex -L"C:/Program Files/MATLAB/R2008b/extern/lib/win32/lcc" -lmwblas normKj.c</pre>
+ただし，MATLAB のインストールフォルダや<code>mex</code>コマンドが使用するコンパイラにあわせて修正する必要があります．<code>mex</code> コマンドが使用するコンパイラを選択するには <code>mex -setup</code> を実行して下さい．
+</p>
+<h3>ヘッダーファイルが見つからないと言われたら / mex コマンドのオプションが間違っていると言われたら</h3>
+<p>少し古いバージョンの MATLAB は blas ライブラリが含まれていないので，以下のようにします．</p>
+<h4>Windows の場合</h4>
+<ol>
+<li><a href="http://www.netlib.org/clapack/LIB_WINDOWS/Win32/BLAS_nowrap.lib">BLAS_nowrap.lib</a>をダウンロードして<code>demo/SpicyMKL</code>において下さい．</li>
+<li><a href="mexfilesR13.zip">mexfilesR13.zip</a> をダウンロードして，<code>demo/SpicyMKL</code>の<code>normKj.c</code>，<code>HessAugMexbias.c</code>を上書きしてして下さい．</li>
+<li>MATLABを起動し，<code>demo/SpicyMKL</code>に移動して，以下のコマンドでコンパイルして下さい．
+<pre class="box">
+mex normKj.c BLAS_nowrap.lib
+mex HessAugMexbias.c BLAS_nowrap.lib
+</pre></li>
+</ol>
+<h4>UNIX / LINUX の場合</h4>
+<a href="mexfilesR13.zip">mexfilesR13.zip</a>をダウンロードし，Windows の場合と同様に .c ファイルを上書きして下さい．さらに，
+<dl>
+<dt>BLAS ライブラリがある場合</dt>
+<dd> 以下のコマンドでコンパイルして下さい．
+<pre class="box">
+mex -lblas normKj.c
+mex -lblas HessAugMexbias.c
+</pre></dd>
+<dt>BLAS ライブラリがない場合</dt>
+<dd>一番簡単なのは<a href="http://www.netlib.org/clapack/clapack.tgz">clapack.tgz</a>をダウンロードし，<code>README.install</code>に従って<code>make</code>することです（LAPACKは不要です）．これで作られた<code>blas_LINUX.a</code>ファイルを<code>demo/SpicyMKL</code>にコピーし，以下のコマンドでコンパイルして下さい．
+<pre class="box">
+mex normKj.c blas_LINUX.a
+mex HessAugMexbias.c blas_LINUX.a
+</pre></dd>
+</dl>
+<h3>その他</h3>
+<p>デスクトップなど，日本語やスペースが作業フォルダ名に含まれるとうまくコンパイルできない場合もあるようです．</p>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="keywords" content="DAL, MKL, PRMU09, 冨岡亮太"/>
+  <title>PRMU/CVIM2009 デモンストレーション</title>
+  <link rel="stylesheet" href="basic.css" type="text/css"/>
+</head>
+<body>
+<h1>MATLABによるスパース正則化／信号復元のデモンストレーション</h1>
+<center><font size=+1><a href="http://www.ibis.t.u-tokyo.ac.jp/ryotat/">冨岡 亮太</a>，<a href="http://www.stat.t.u-tokyo.ac.jp/~s-taiji/">鈴木 大慈</a>，<a href="http://sugiyama-www.cs.titech.ac.jp/~sugi/index-jp.html">杉山 将</a></font></center>
+<center><a href="prmu09talk.pdf">スライドはこちらです</a></center>
+<h2>ダウンロード</h2>
+<ul><li><a href="demo.zip">demo.zip (1.1MB)</a></li></ul>
+<h2>使用方法</h2>
+<ol>
+<li>ファイルを解凍して下さい．</li>
+<li>解凍すると以下のようなディレクトリ構造をしています．
+<pre class="box">
+demo/demo1/      : 信号復元のデモです．
+     demo2/      : バイオインフォマティクスのデモです．
+     demo3/      : 画像認識のデモです．
+     dal/        : スパース正則化のツールボックスです．
+     SpicyMKL/   : マルチカーネル学習のツールボックスです．
+</pre>
+</li>
+<li>デモを実行するにはそれぞれ <a href="doc/demo/demo1/demo1.html">demo1.m</a>, <a href="doc/demo/demo2/demo21.html">demo21.m</a>, <a href="doc/demo/demo2/demo22.html">demo22.m</a>, <a href="doc/demo/demo3/demo3.html">demo3.m</a>を実行して下さい．</li>
+</ol>
+さらに詳しい情報は<a href="doc/index.html">こちら</a>をごらん下さい．
+<h2>お願い</h2>
+<p>このソフトウェアは<a href="http://ja.wikipedia.org/wiki/MIT_License">MITライセンス</a>に基づいて配布しています．著作権の表示を記載すれば，再利用は自由です．ただし，このソフトウェアを利用して得られた成果を発表する場合は，参考文献[1,2,9]のいずれかを引用して下さい．</p>
+<h2>フィードバック</h2>
+<p>質問，感想，その他ありましたらぜひお寄せ下さい． tomioka<img src="a.png">mist.i.u-tokyo.ac.jp</p>
+<h2>1. 信号復元</h2>
+<dl>
+<dt>実行方法</dt><dd><code>demo/demo1/</code>に移動して<code>demo1.m</code>を実行して下さい．</dd>
+<dt>説明</dt><dd>
+ノイズの中に埋もれ，ぼかしのかかったスパースな信号を見つけ出します．ここで最適化問題は
+<div class="eq">
+<img src="eqimage.png" alt="\minimize_{\vx\in\RR^n}¥quad¥frac{1}{2}¥|\mA\vx-\vb¥|_2^2+¥lambda¥|\vx¥|_1">
+</div>
+と書かれ，x は真のスパースな画像，b は観測されたノイズを含む画像，
+A は画素数x画素数次元の行列でぼかしの畳み込み行列です．
+&lambda;は正則化定数で，ノイズやぼかしの強さによって適切に選ぶ必要があ
+りますが，下の例では&lambda;=0.005としています．
+</dd>
+</dl>
+<center><img src="demo1_result.jpg"></center>
+<p>上の図では左に観測画像 b，左に（ぼかされた）真の画像と推定されたの信号の位置を重ねて表示しています．この画像は 128x128 なので，x は 16,384 次元ですが，我々が提案する Dual Augmented Lagrangian (DAL) 法[2]を用いると2秒程度（Core2duo 1.86GHz）で解を得ることができます．</p>
+<h2>2. バイオインフォマティクス</h2>
+多発性硬化症に対するインターフェロン療法(rIFN&beta;)の有効性を遺伝子発現データから予測する判別問題です[3]．52人の患者の70の遺伝子の発現量が最長2年間に渡って測定されました．52人のうちの33人がインターフェロン療法が有効，19人が無効で，これを教師あり，2値判別の問題として扱います．
+<h3>2.1 時系列の情報を用いる</h3>
+<dl>
+<dt>実行方法</dt><dd><code>demo/demo2/</code>に移動して<code>demo21.m</code>を実行して下さい．</dd>
+<dt>説明</dt>
+<dd>ここでは Borgwardt ら[4] の問題設定に即して，すべての時間点を用いて，遺伝子発現の時系列から治療の有効性を予測する問題を考えます．70個の遺伝子について，測定期間を通した平均発現量，発現量の1階差分の平均，2階差分の平均を計算し，3x70次元の特徴ベクトルを得ます．ここではグループラッソー[5]を使って，治療の有効性を予測しうる遺伝子を選択する問題を考えます．具体的には最適化問題は
+<div class="eq">
+<img src="eqts.png" alt="\minimize_{\vw\in\RR^{3\times 70}}\quad \sum_{i=1}^{m}\ell^L(\dot{\vw}{\vx_i}+b)+\lambda\sum_{j=1}^{70}\|\vw_j\|_2">
+</div>
+と書け,ここで <img src="logit.png" alt="\ell_i^L(z_i)=\log\left(1+e^{-y_iz_i}\right)" align="center"> はロジスティック損失関数（例えば[6]を参照）で判別問題としては標準的なものです．また，x<sub>i</sub>は上述の3x70次元の特徴ベクトル，y<sub>i</sub>は+1，-1のどちらかの値を取り，治療が有効か，無効かを表すラベル，w は x<sub>i</sub> と同次元の重みベクトル，w<sub>j</sub>は j 番目の遺伝子に対応する w の3次元の部分ベクトル，b はバイアス項とします．m はサンプルの数です．正則化項がノルムの（2乗和ではなく）線形和であることに注意して下さい．
+</dd>
+</dl>
+<center><img src="demo2_result_gl.png" alt="時系列の情報を用いた治療の有効性の予測結果" align="center" width="400px"><a href="demo2_result_genes.png"><img src="demo2_result_genes.png" width="400px"></a></center>
+
+<p>上の最初の図は100回の 4-fold cross-validation に基づく予測精度です．時系列の情報を，平均，1階差分，2階差分に落とし込むという単純な方法で Borgwardt らの Dynamical Systems Kernel とほぼ同程度の精度が得られます．また，次の図に示すように，スパースな正則化を用いることで，予測に有用な遺伝子（の組）を見つけることができます．この図では70個の遺伝子について対応する3次元部分ベクトル w<sub>j</sub> のノルム（cross-validation による平均）を表示しています．我々が提案するDAL法[1,2]を用いると20個の正則化定数&lambda;の候補に対する 1回の 4-fold cross-validation が約27.6秒（Core2duo 1.86GHz）で計算できます．</p>
+
+<h3>2.2 遺伝子の組み合わせを探す</h3>
+<dl>
+<dt>実行方法</dt><dd>
+<ol>
+<li><code>demo/SpicyMKL/</code>に移動して<code>setup.m</code>を実行して下さい．（<a href="mexhelp.html">エラーが出る場合</a>）</li>
+<li><code>demo/demo2/</code>に移動して<code>demo22.m</code>を実行して下さい．</li>
+</ol></dd>
+<dt>説明</dt><dd>
+Baranzini ら [3] は治療の有効性を予測しうる3つの遺伝子の組み合わせを探し，例えば {Caspase 2, Caspase 10, FLIP} の組み合わせで Quadratic Discriminant Analysis を行うと，時刻0（治療開始時）のデータだけから，87.8% の予測精度を達成できることを示しました．ここでは彼らが有効だと示した9つの3つ組にそれぞれ2次の多項式カーネルを導入して，9つの情報源と見なし，これをマルチカーネル学習 (MKL) （例えば[7,8]） を用いて最適に組み合わせる問題を考えます．2.1 節とは時系列の情報を扱わない代わりに遺伝子の間の非線形な関係を扱っている点で異なることに注意して下さい．具体的には以下の最適化問題を解きます：
+<div class="eq">
+<img src="eqmkl.png" alt="\minimize_{\valpha\in\RR^{m\times n},b\in\RR}\quad \sum_{i=1}^{m}\ell_i^L\left(\textstyle\sum_{j=1}^{n}\bm{K}_j\valpha_j+b\right)+\lambda\sum_{j=1}^{n}\|\valpha_j\|_{K_j}">
+</div>
+ここで，n=9 はカーネルの数とします．<img src="mklnorm.png" alt="\|\valpha_j\|_{K_j}=\sqrt{\valpha_j\T\bm{K}_j\valpha_j}" align="center"> は &alpha;<sub>j</sub> を係数とする j 番目の関数のノルムです．カーネル行列 K<sub>j</sub> が導入されているのを無視すれば，この最適化問題は 2.1 で扱った最適化問題と同じ形をしていることに注意して下さい．
+</dd>
+</dl>
+<!--具体的には70個から3個を選ぶ54,740通りの組み合わせのひとつひとつに多項式カーネルを導入します．MKLはこれらのカーネル候補の（スパースな）線形結合によって得られる結合カーネルを用いて治療の有効性の予測を行います．それぞれの遺伝子の3つ組に対してカーネル関数を導入することで，3遺伝子間の非線形な関係も捉えることができます．MKL を用いると，自動的に有用なカーネルを選び出せるだけでなく，最終的に計算しなければいけないカーネルの数がカーネル候補の数よりずっと少ないため，計算量の削減も期待できます．具体的には最適化問題は以下のように書けます．-->
+
+<center>
+<img src="demo2_result_mkl.png" width="400px"><a href="demo2_result_triplets.png"><img src="demo2_result_triplets.png" width="400px"></a>
+</center>
+
+<p>上の最初の図は100回の 4-fold cross-validation に基づく予測精度です．1つの3つ組を用いるより，複数の3つ組をMKLを用いて組み合わせた方が精度がよくなることがわかります．次の図は，MKL が選んだカーネル重みで，cross-validation の結果の平均です．我々が提案している SpicyMKL 法（DAL を MKL に拡張したもの）[1,9]を用いると，10個の正則化定数の候補に対する1回の4-fold cross-validation が約7.3秒（Core2duo 1.86GHz）で計算できます．</p>
+
+<h2>3. CV</h2>
+<dl>
+<dt>実行方法</dt>
+<dd>
+<ol>
+<li><code>demo/SpicyMKL/</code>に移動して<code>setup.m</code>を実行して下さい．（<a href="mexhelp.html">エラーが出る場合</a>）</li>
+<li><a href="data/">データ（計算済みカーネル行列）</a>をダウンロードして<code>demo/demo3/</code>において下さい．（実行したい2クラスの組み合わせだけで大丈夫です．）</li>
+<li><code>demo/demo3/</code>に移動して<code>demo3.m</code>を実行して下さい．</li>
+</ol></dd>
+<dt>説明</dt>
+<dd>
+<a href="http://www.vision.caltech.edu/Image_Datasets/Caltech101/">Caltech 101</a>[10]というベンチマークデータを用いた画像認識のデモです．ここでは，anchor（例題数42），ant（例題数42），cannon（例題数43），chair（例題数62），cup（例題数57）の5つのクラスを用いて，10通りの2クラス判別問題を作りマルチカーネル学習の実験を行います．カーネルとしては，まず，van de Sande ら[11]の特徴抽出アルゴリズムを用いてひとつひとつの画像を Bag-of-visual-words として表現し，いくつかのあらかじめ決められた（階層構造をなす）矩形領域[12]における visual words の出現頻度（ヒストグラム）を特徴ベクトルとします．これらの特徴ベクトルをガウシアンカーネルあるいは &chi;<sup>2</sup>カーネル関数に代入して，内積値を得ます．特徴抽出法としては，hsvsift, sift（スケール自動）, sift（スケール4pxで固定），sift（スケール8pxで固定）の4種類を用いました．特徴抽出法（4通り），それを統合する矩形領域（画像全体，4分割，16分割，およびそれらを[12]の提案する重みで統合したものの22通り），カーネル関数（2つのカーネル関数を，それぞれ10通りのパラメータで適用）の組み合わせによりカーネルが得られるため，最終的なカーネルの数は1,760個となります．
+</dd>
+<div class="imagebox">
+<div><img src="anchor.jpg"><p>[anchor]</p></div>
+<div><img src="ant.jpg"><p>[ant]</p></div>
+<div><img src="cannon.jpg"><p>[cannon]</p></div>
+<div><img src="chair.jpg"><p>[chair]</p></div>
+<div><img src="cup.jpg"><p>[cup]</p></div>
+</div>
+<br clear="both">
+<center>各クラスに含まれる画像の例．</center>
+<center><a href="demo3_result_scl4.png"><img src="demo3_result_scl4.png" width="400px"></a></center>
+<p>ここでは10通りの2クラスの組み合わせについて，それぞれのクラスからランダムに同数の画像を選び訓練用画像として，残りの画像をテスト用としました．上の図はこのようなテストを100回行った際の平均予測精度を示しています（ここでは正則化定数&lambda;=0.01で固定しています）．我々が提案している SpicyMKL 法[1,9]を用いると1クラスあたりのサンプル数が15，カーネル数1,760のとき，2.2秒（Core2Duo 1.86GHz）で1回の最適化をすることができます．</p>
+
+<h2>参考文献</h2>
+<ol>
+<li><a href="../prmu09.pdf">スパース正則化およびマルチカーネル学習のための最適化アルゴリズムとCV・PRへの応用 (特別講演)</a>, 冨岡亮太, 鈴木大慈, 杉山将,
+信学技報, 109(182), PRMU2009-63, 43--48 (2009)</li>
+<li><a href="http://arxiv.org/abs/0904.0584">Dual Augmented Lagrangian Method for Efficient Sparse Reconstruction"</a>, Tomioka, R. and Sugiyama, M.,
+IEEE Signal Processing Letters (2009) Accepted.
+<li><a href="http://www.plosbiology.org/article/info:doi/10.1371/journal.pbio.0030002">Transcription-Based Prediction of Response to IFNβ Using Supervised Computational Methods</a>, Baranzini, S.E., Mousavi, P., Rio, J., Caillier, S.J., Stillman, A., et al., PLoS Biology 3(1) (2005).
+</li>
+<li><a href="http://psb.stanford.edu/psb-online/proceedings/psb06/abstracts/2006_p547.html">Class Prediction From Time Series Gene Expression Profiles Using Dynamical Systems Kernels</a>, Borgwardt, K.M., Vishwanathan, S.V.N., &amp; Kriegel, H.-P., Pac Symp Biocomput. 547-58  (2006). 
+</li>
+<li><a href="http://www2.isye.gatech.edu/~myuan/papers/glasso.final.pdf">Model selection and estimation in regression with grouped variables</a>, Yuan, M. and Lin, Y., Journal of the Royal Statistical Society Series B 68(1) 49--67 (2006).
+<li><a href="http://research.microsoft.com/en-us/um/people/cmbishop/prml/">Pattern Recognition and Machine Learning</a>, Bishop C.M. (2006). <a href="http://ibisforest.org/index.php?PRML">[日本語訳：パターン認識と機械学習（シュプリンガージャパン）]</a>
+</li>
+<li><a href="http://portal.acm.org/citation.cfm?id=1005334&dl=GUIDE,">Learning the kernel matrix with semidefinite programming</a>,
+Lanckriet, G.R.G., Cristianini, N., Bartlett, P., El Ghaoui, L., Jordan, M.I.,
+JMLR 5, 27--72 (2004)</li>
+<li>
+<a href="http://www.di.ens.fr/~fbach/skm_icml.pdf">Multiple kernel learning, conic duality, and the SMO algorithm</a>,
+Bach, F.R., Lanckriet, G.R.G., and Jordan, M.I.,
+In Proc. ICML 2004 (2004).</li>
+<li><a href="http://arxiv1.library.cornell.edu/abs/0909.5026">SpicyMKL</a>, Suzuki, T. &amp; Tomioka, R., arXiv:0909.5026.</li>
+<li><a href="http://www.vision.caltech.edu/feifeili/Fei-Fei_GMBV04.pdf">Learning generative visual models
+from few training examples: an incremental Bayesian approach tested on
+101 object categories</a>,
+Fei-Fei, L., Fergus, R., and Perona, P., IEEE. CVPR 2004, Workshop on Generative-Model Based Vision. (2004). <a href="http://www.vision.caltech.edu/Image_Datasets/Caltech101/">[ウェブページ]</a></li>
+<li>
+<a href="http://staff.science.uva.nl/~ksande/pub/vandesande-cvpr2008.pdf">Evaluation of Color Descriptors for Object and Scene Recognition</a>, van de Sande, K.E.A., Gevers, T., &amp; Snoek, C.G.M., Proc. of CVPR. (2008). <a href="http://staff.science.uva.nl/~ksande/research/colordescriptors/">[ソフトウェア]</a>
+</li>
+<li><a href="http://www-cvr.ai.uiuc.edu/ponce_grp/publication/paper/cvpr06b.pdf">Beyond bags of
+features: Spatial pyramid matching for recognizing natural
+scene categories</a>, Lazebnik, S., Schmid, C., &amp; Ponce, J. In IEEE CVPR (2006).
+</li>
+</ol>
+
+</body>
+</html>

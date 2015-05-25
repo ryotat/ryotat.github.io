@@ -1,0 +1,65 @@
+body{
+/*background: url(en.gif) no-repeat scroll 80px 100px;*/
+margin:4em; font-family: Arial,Helvetica,sans-serif; line-height: 200%; }
+
+a:link {color: blue;}
+a:visited {color: #597BB3;}
+a:hover {color: crimson;}
+
+h1{ line-height: 130%;
+    text-align: center; }
+/*h1{font-size: 300%; line-height: 150%;}*/
+/*h2{background: url(fude.gif) no-repeat; padding-bottom: 0.5em; }*/
+
+
+dt{margin:.5em 0;font-weight:bold;}
+dd{margin:.5em 0 1em 2em;}
+
+ul li { list-style-type: disc; }
+ul li ul li{ list-style-type: circle; }
+
+ul.wide li { margin-bottom: 1ex; }
+
+img { margin:0 auto 0 auto; }
+/* blue box */
+.box {
+	margin: 2ex 1em;
+	padding: 1ex 1em;
+	background-color: #F2F2FA;
+	border: 1px solid silver;
+	color: midnightblue;
+}
+
+.eq {
+	margin: 2ex 1em;
+	padding: 1ex 1em;
+	background-color: #F2F2FA;
+	border: 1px solid silver;
+	color: midnightblue;
+	text-align: center;
+}
+
+.test  {
+  border: 1px solid blue;
+}
+
+code {color: darkblue;}
+
+div.imagebox {
+ width:750px;
+ margin: 0 auto;
+}
+
+.imagebox>div {
+float: left;
+}
+
+.imagebox p {
+ text-align: center;
+ margin: 0px;
+}
+
+
+a.tooltip:hover {background:#ffffff; text-decoration:none; } /*BG color is a must for IE6*/
+a.tooltip span {display:none; padding:2px 3px; margin-left:8px; width:130px;}
+a.tooltip:hover span{display:inline; position:absolute; background:#ffffff; border:1px solid #cccccc; color:#6c6c6c;}

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Teaching - Ryota Tomioka @ TTI-C</title>
+	<link rel="stylesheet" type="text/css" charset="utf-8" media="all" href="../../all.css"/>
+	<meta http-equiv="content-type" content="text-html; charset=UTF-8"/>
+	<script type="text/x-mathjax-config">
+	MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+	</script>
+	<script type="text/javascript" src="https://c328740.ssl.cf1.rackcdn.com/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+	</script>
+</head>
+<body>
+	<div class="content">
+		<h1>PCA, K-means, and pLSA (数理情報工学演習第二A)</h1>
+
+		<a href="rejume.pdf">Hand out and assignments</a>. Assignments are due <span class="red">Wednesday, July 17.</span>
+		<h2>Principal Component Analysis</h2>
+		<h3>United States Postal Service (USPS) Data</h3>
+		<ul> 
+			<li><a href="http://statweb.stanford.edu/~tibs/ElemStatLearn/datasets/zip.info.txt">Description</a> (originally from <a href="http://www-stat.stanford.edu/~tibs/ElemStatLearn/">Hastie et al. "Elements of Statistical Learning"</a>)</li>
+			<li>Download <a href="zip.train.gz">data</a></li>
+		</ul>
+		<h3>Load the data</h3>
+		<pre class="code">
+			data=importdata('data/elem/usps/zip.train');
+			Y=data(:,1);
+			X=data(:,2:end)';
+		</pre>
+
+		<h3>Visualize some of the training examples</h3>
+		<pre class="code">
+			for ii=1:10
+			subplot(1,10,ii); imagesc(reshape(X(:,ii),[16,16])'); colormap gray; title(int2str(Y(ii)));
+			end
+		</pre>
+
+		<h3>Subtract mean image</h3>
+		<pre class="code">
+			xm=mean(X,2);
+			Xb = bsxfun(@minus, X, xm);
+		</pre>
+		<h3>Compute PCA</h3>
+		<pre class="code">
+			[U,S,V]=svd(Xb);
+		</pre>
+		Use Mark Tygert's <a href="http://cims.nyu.edu/~tygert/pca.m">pca.m</a> if this takes too much time.
+		<pre class="code">
+			[U,Lmd,V]=pca(Xb, 50, 10); % obtain the 50 largest singular values/vectors
+		</pre>
+
+		<h3>Visualize the singular-value spectrum</h3>
+		<pre class="code">
+			figure, plot(diag(S),'-x')
+		</pre>
+		Question: Given singular-values $s_1,s_2,...s_p$ (p is the number of dimensions 256), what fraction of the total variance is explained if we truncate the SVD at the $k$th singular-values/vectors?
+
+		<h3>Visualize the principal components</h3>
+		<pre class="code">
+			for ii=1:50
+			subplot(5,10,ii); imagesc(reshape(U(:,ii),[16,16])'); colormap gray;
+			end
+		</pre>
+
+		<h3>Visualize the top two-dimensional projection</h3>
+		<pre class="code">
+			figure;
+			colormap jet; col=colormap;
+			for cc=1:10
+			ix=find(Y==(cc-1));
+			text(V(ix,1), V(ix,2),int2str(cc-1), 'color', col(ceil(size(col,1)*cc/10),:));
+			end
+			xlim([min(V(:,1)), max(V(:,1))]); ylim([min(V(:,2)),max(V(:,2))]);
+		</pre>
+
+		<img src="2dplot.png" width="600"/>
+		<h3>Advanced: Face images</h3>
+		<ul>
+			<li><a href="http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html">Description</a></li>
+			<li>Download <a href="http://www.cl.cam.ac.uk/Research/DTG/attarchive/pub/data/att_faces.zip">data</a></li>
+		</ul>
+		How to read the data
+		<pre class="code">
+			I=imread('att_faces/s1/1.pgm');
+		</pre>
+
+		<h2>k-means Clustering</h2>
+		Use the same USPS data set.
+
+		<h3>Implement k-means clustering</h3>
+		<ol>
+			<li>Download the skeleton: <a href="kmeans.m">kmeans.m</a>.</li>
+			<li>Implement the "cluster center update step".</li>
+			<li>Implement the "cluster assignment update step".</li>
+		</ol>
+		<h3>Run k-means</h3>
+		With the number of clusters 10:
+		<pre class="code">
+			[M,Z] = kmeans(X, 10);
+		</pre>
+
+		<h3>Visualize the cluster centers</h3>
+		<pre class="code">
+			for ii=1:10
+			subplot(1,10,ii); imagesc(reshape(M(:,ii),[16,16])'); colormap gray;
+			end
+		</pre>
+		<h3>Check whether the cluster assignments are consistent with the class labels</h3>
+		Download a function <a href="loss_confusionMatrix.m">loss_confusionMatrix.m</a> to compute the confusion matrix and
+		<pre class="code">
+			[Yout, JJ, NN]=find(Z);
+			C=loss_confusionMatrix(Y, Yout)
+			figure, imagesc(C); set(gca,'yticklabel',0:9);
+		</pre>
+
+		<img src="confusion_kmeans.png" width="600"/>
+
+		<h2>Probabilistic Latent Semantic Indexing (pLSA)</h2>
+		<h3>20 Newsgroups data set</h3>
+		<ul>
+			<li><a href="http://people.csail.mit.edu/jrennie/20Newsgroups">Description</a></li>
+			<li>Download the <a href="http://people.csail.mit.edu/jrennie/20Newsgroups/20news-bydate-matlab.tgz">data</a></li>
+			<li>Alternative download <a href="20news-bydate-matlab.zip">20news-bydate-matlab.zip</a> (.zip)</li>
+			<li>Vocabulary <a href="vocabulary.txt">vocabulary.txt</a></li>
+			<li>Stop words <a href="stopwords.txt">stopwords.txt</a> (<a href="http://www.ranks.nl/resources/stopwords.html">original</a>)</li>
+		</ul>
+
+		<h3>Read the data</h3>
+		Read the vocabulary
+		<pre class="code">
+			voc=importdata('vocabulary.txt');
+			D=length(voc);
+		</pre>
+		Read the labels and data
+		<pre class="code">
+			Y=load('matlab/train.label');
+			N=length(Y);
+			load('matlab/train.data');
+			X=sparse(train(:,2),train(:,1),train(:,3),D,N);
+		</pre>
+		<h3>Remove stop words</h3>
+		Download <a href="findsubset.m">findsubset.m</a>
+		<pre class="code">
+			stop=importdata('stopwords.txt');
+			I=findsubset(voc, stop); I=I(~isnan(I));
+			X(I,:)=[];
+			voc(I)=[];
+		</pre>
+
+		<h3>Implement pLSA</h3>
+		<ol>
+			<li>Download the skeleton <a href="plsa_em.m">plsa_em.m</a>.</li>
+			<li>Implement the E-step.</li>
+			<li>Implement the M-step.</li>
+		</ol>
+		<h3>Run pLSA</h3>
+		With the number of topics 20
+		<pre class="code">
+			K=20;
+			[Phi,Pi,nlogP]=plsa_em(X,K,200);
+		</pre>
+
+		<h3>Assess the coherence between the true class labels</h3>
+		<pre class="code">
+			top20=cell(20,K);
+			for ii=1:K
+			[ss,ix]=sort(-Phi(:,ii)); top20(:,ii)=voc(ix(1:20));
+			end
+		</pre>
+
+		<h3>Assess the coherence between the true class labels</h3>
+		Calculate the probability of labels given a topic P(y|c)（y: class label, c: topic)
+		<pre class="code">
+			Pyc=zeros(20,K);
+			for cc=1:20
+			Pyc(cc,:)=sum(Pi(:,Y==cc)');
+			end
+			Pyc=bsxfun(@rdivide, Pyc, sum(Pyc));
+			figure, imagesc(Pyc); 
+			tmp=importdata('matlab/train.map');
+			set(gca,'ytick',1:20,'yticklabel',tmp.textdata)
+		</pre>
+
+		<img src="pyc_plsa.png" width="600"/>
+
+		<h2>References</h2>
+		<ul>
+			<li>See <a href="http://www-stat.stanford.edu/~tibs/ElemStatLearn/">"Elements of Statistical Learning (Hastie 2009)</a> and <a href="http://research.microsoft.com/en-us/um/people/cmbishop/prml/">"Pattern Recognition and Machine Learlning" (Bishop 2006)</a> for PCA and k-means.</li>
+			<li>See <a href="http://www.cs.brown.edu/~th/papers/Hofmann-SIGIR99.pdf">Hofman 1999</a> for pLSA.</li>
+		</ul>
+	</div>
+</body>
+</html>
