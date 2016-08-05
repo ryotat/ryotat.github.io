@@ -4,8 +4,11 @@ body {
 }
 a { text-decoration: none; }
 a:hover { text-decoration: underline; }
-@media(min-width: 900px) {
+@media (min-width: 900px) {
 	div.content { width: 80%; margin-left: 10%;}
+}
+@media (max-width: 899px) {
+	div.content { width: 100%; margin-left: 0%;}
 }
 ul.bio li { list-style-type: none;}
 div.right {
@@ -19,11 +22,12 @@ div.nav {
 div.nav ul {
 	margin: 0px;
 	padding: 0px;
+	letter-spacing: -0.31em;
 }
 div.nav ul li {
 	display: inline-block;
 	padding: 5px 10px;
-
+	letter-spacing: normal;
 }
 div.nav ul li:before {
 	content: '| ';
